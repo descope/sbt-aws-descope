@@ -18,5 +18,11 @@
     "peerDependencies": {
         "aws-cdk-lib": "^2.140.0",
         "constructs": "^10.0.5"
+    },
+    "dependencies": {
+        "@aws-cdk/aws-kinesisfirehose-alpha": "^2.166.0-alpha.0",
+        "@aws-cdk/aws-lambda-python-alpha": "^2.166.0-alpha.0",
+        "@cdklabs/sbt-aws": "^0.5.12",
+        "aws-cdk": "^2.166.0"
     }
 }
