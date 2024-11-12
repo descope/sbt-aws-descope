@@ -172,6 +172,22 @@ constructor(scope: Construct, id: string, props: DescopeAuthProps) {
     this.tokenEndpoint = `https://${props.descopeDomain}/oauth2/v1/token`;
     this.wellKnownEndpointUrl = `https://${props.descopeDomain}/.well-known/openid-configuration`;
 
+// Lambda function for user management services
+const userManagementServices = new PythonFunction(this, 'userManagementServices', {
+    entry: path.join(__dirname, '../../../resources/functions/user-management'),
+    runtime: Runtime.PYTHON_3_12,
+    index: 'index.py',
+    handler: 'lambda_handler',
+    timeout: Duration.seconds(60),
+    layers: [lambdaPowerToolsLayer],
+    environment: {
+        DOMAIN: props.descopeDomain,
+        CLIENT_ID: props.descopeProjectId,
+        CLIENT_SECRET_PARAMETER_NAME: props.clientSecretSSMMgmtKey
+    }
+  });
+
+
 //Creating Admin User Function
 
 this.createAdminUserFunction = new PythonFunction(this, 'createAdminUserFunction', {

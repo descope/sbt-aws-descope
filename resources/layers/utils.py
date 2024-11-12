@@ -16,8 +16,6 @@ def _get_secret_ssm_parameter_from_extension(name: str):
     return json.loads(config)['Parameter']['Value']
 
 
-def get_descope_handler(domain, client_id, client_secret_mgmt_key):
-    client_secret = _get_secret_ssm_parameter_from_extension(client_secret_mgmt_key)
-    get_token = 
-    token = 
-    return DescopeClient(domain, token['access_token'])
+def get_descope_handler(project_id, client_secret_mgmt_key):
+    mgmt_key = _get_secret_ssm_parameter_from_extension(client_secret_mgmt_key)
+    return DescopeClient(project_id, mgmt_key)

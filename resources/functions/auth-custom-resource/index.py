@@ -21,7 +21,7 @@ def do_action(event, _):
 
 
 # Initialize the Descope client
-descope_client = DescopeClient(PROJECT_ID)
+descope_client = DescopeClient()
 
 
 def create_user(user_name, email, user_role):
