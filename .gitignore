@@ -56,7 +56,6 @@ junit.xml
 /dist/
 !/.eslintrc.json
 .jsii
-tsconfig.json
 !/API.md
 !/.projenrc.ts
 *.js
