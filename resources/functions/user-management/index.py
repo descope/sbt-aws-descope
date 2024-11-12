@@ -1,5 +1,7 @@
 import os
 from utils import get_descope_handler
+from aws_lambda_powertools import Tracer
+from aws_lambda_powertools import Logger
 from crhelper import CfnResource
 from aws_lambda_powertools.event_handler.exceptions import (
     InternalServerError,
