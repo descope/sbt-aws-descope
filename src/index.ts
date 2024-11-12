@@ -1,6 +1,3 @@
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
-
 import {
   PythonFunction,
   PythonLayerVersion,
@@ -24,13 +21,13 @@ export interface DescopeAuthProps {
    * Descope Project ID.
    * This is to make calls to Descope Management APIs.
    */
-  readonly descopeProjectId: string;
+  readonly projectId: string;
 
   /**
    * Override the base URL for the well-known configuration.
-   * @default defaultDescopeDomain
+   * @default defaultdomain
    */
-  readonly descopeDomain?: string;
+  readonly domain?: string;
 
   /**
    * The callback URL for the control plane.
@@ -57,6 +54,21 @@ export interface CreateMachineClientProps {
   readonly description: string;
 }
 
+/*
+ * Function for setting Base Url based on Project ID
+ */
+function baseUrlForProjectId(projectId: string): string {
+  const DEFAULT_URL_PREFIX = "https://api";
+  const DEFAULT_DOMAIN = "descope.com";
+  const DEFAULT_BASE_URL = `${DEFAULT_URL_PREFIX}.${DEFAULT_DOMAIN}`;
+
+  if (projectId && projectId.length >= 32) {
+    const region = projectId.substring(1, 5);
+    return `${DEFAULT_URL_PREFIX}.${region}.${DEFAULT_DOMAIN}`;
+  }
+  return DEFAULT_BASE_URL;
+}
+
 export class DescopeAuth extends Construct implements sbt.IAuth {
   readonly jwtIssuer: string;
   readonly jwtAudience: string[];
@@ -76,7 +88,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
 
   private readonly createAdminUserFunction: lambda.IFunction;
   private readonly createClientFunction: lambda.IFunction;
-  private readonly defaultDescopeDomain: string;
+  private readonly defaultDomain: string;
 
   constructor(scope: Construct, id: string, props: DescopeAuthProps) {
     super(scope, id);
@@ -176,24 +188,22 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         timeout: Duration.seconds(60),
         layers: lambdaFunctionsLayers,
         environment: {
-          CLIENT_ID: props.descopeProjectId,
-          CLIENT_SECRET_PARAMETER_NAME: clientSecretSSMMgmtKey.parameterName,
+          DESCOPE_PROJECT_ID: props.projectId,
+          DESCOPE_MANAGEMENT_KEY: clientSecretSSMMgmtKey.parameterName,
+          DESCOPE_BASE_URI: this.defaultDomain,
         },
       }
     );
     clientSecretSSMMgmtKey.grantRead(this.createClientFunction);
 
-    // Set default domain if descopeProjectId has correct length
-    this.defaultDescopeDomain =
-      props.descopeProjectId && props.descopeProjectId.length === 32
-        ? "https://api.euc1.descope.com"
-        : "https://api.descope.com";
+    // Set base url based on project id length
+    this.defaultDomain = baseUrlForProjectId(props.projectId);
 
-    this.managementBaseUrl = props.descopeDomain || this.defaultDescopeDomain;
-    this.jwtIssuer = `https://${props.descopeDomain}/${props.descopeProjectId}`;
-    this.jwtAudience = [props.descopeProjectId];
-    this.tokenEndpoint = `https://${props.descopeDomain}/oauth2/v1/token`;
-    this.wellKnownEndpointUrl = `https://${props.descopeDomain}/.well-known/openid-configuration`;
+    this.managementBaseUrl = props.domain || this.defaultDomain;
+    this.jwtIssuer = `https://${props.domain}/${props.projectId}`;
+    this.jwtAudience = [props.projectId];
+    this.tokenEndpoint = `https://${props.domain}/oauth2/v1/token`;
+    this.wellKnownEndpointUrl = `https://${props.domain}/.well-known/openid-configuration`;
 
     const machineClientResource = this.createMachineClient(
       this,
@@ -208,13 +218,12 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     this.machineClientId = machineClientResource.getAttString("ClientId");
     new cdk.CfnOutput(this, "machineClientId", { value: this.machineClientId });
 
-    // TODO: How to set it as a secret, instead of a String?
     this.machineClientSecret = cdk.SecretValue.resourceAttribute(
       machineClientResource.getAttString("ClientSecret")
     );
 
     // Default SSO application is the only user client that's currently supported.
-    this.userClientId = props.descopeProjectId;
+    this.userClientId = props.projectId;
     new cdk.CfnOutput(this, "userClientId", { value: this.userClientId });
 
     // Lambda function for user management services
@@ -232,8 +241,9 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         timeout: Duration.seconds(60),
         layers: lambdaFunctionsLayers,
         environment: {
-          CLIENT_ID: props.descopeProjectId,
-          CLIENT_SECRET_PARAMETER_NAME: clientSecretSSMMgmtKey.parameterName,
+          DESCOPE_PROJECT_ID: props.projectId,
+          DESCOPE_MANAGEMENT_KEY: clientSecretSSMMgmtKey.parameterName,
+          DESCOPE_BASE_URI: this.defaultDomain,
         },
       }
     );
@@ -252,7 +262,6 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         handler: "handler",
         timeout: Duration.seconds(60),
         layers: lambdaFunctionsLayers,
-        environment: {},
       }
     );
 
