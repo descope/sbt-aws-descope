@@ -61,3 +61,4 @@ tsconfig.json
 !/.projenrc.ts
 *.js
 *.d.ts
+.env
