@@ -5,13 +5,7 @@ import {
   PythonFunction,
   PythonLayerVersion,
 } from "@aws-cdk/aws-lambda-python-alpha";
-import {
-  aws_logs as AwsLogs,
-  CustomResource,
-  Duration,
-  SecretValue,
-  Stack,
-} from "aws-cdk-lib";
+import { aws_logs as AwsLogs, CustomResource, Duration } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Runtime, IFunction, LayerVersion } from "aws-cdk-lib/aws-lambda";
 import * as sbt from "@cdklabs/sbt-aws";
@@ -19,7 +13,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
 import * as ssm from "aws-cdk-lib/aws-ssm";
-import { addTemplateTag } from "../../utils";
+import { addTemplateTag } from "@cdklabs/sbt-aws";
 import { NagSuppressions } from "cdk-nag";
 
 /**
@@ -58,10 +52,9 @@ export interface DescopeAuthProps {
   readonly clientSecretSSMMgmtKey: string;
 }
 
-export interface CreateUserClientProps {
-  readonly name?: string;
-  readonly description?: string;
-  readonly callbacks?: string[];
+export interface CreateMachineClientProps {
+  readonly name: string;
+  readonly description: string;
 }
 
 export class DescopeAuth extends Construct implements sbt.IAuth {
@@ -71,37 +64,27 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
   readonly tokenEndpoint: string;
   readonly userClientId: string;
   readonly machineClientId: string;
-  readonly machineClientSecret: string;
+  readonly machineClientSecret: cdk.SecretValue;
   readonly wellKnownEndpointUrl: string;
-  readonly createUserFunction: IFunction;
-  readonly fetchAllUsersFunction: IFunction;
-  readonly fetchUserFunction: IFunction;
-  readonly updateUserFunction: IFunction;
-  readonly deleteUserFunction: IFunction;
-  readonly disableUserFunction: IFunction;
-  readonly enableUserFunction: IFunction;
-  readonly logGroupName: string;
+  readonly createUserFunction: lambda.IFunction;
+  readonly fetchAllUsersFunction: lambda.IFunction;
+  readonly fetchUserFunction: lambda.IFunction;
+  readonly updateUserFunction: lambda.IFunction;
+  readonly deleteUserFunction: lambda.IFunction;
+  readonly disableUserFunction: lambda.IFunction;
+  readonly enableUserFunction: lambda.IFunction;
 
-  private readonly createAdminUserFunction: IFunction;
-  private readonly createClientFunction: IFunction;
+  private readonly createAdminUserFunction: lambda.IFunction;
+  private readonly createClientFunction: lambda.IFunction;
   private readonly defaultDescopeDomain: string;
 
   constructor(scope: Construct, id: string, props: DescopeAuthProps) {
     super(scope, id);
     addTemplateTag(this, "DescopeAuth");
 
-    // Set default domain if descopeProjectId has correct length
-    this.defaultDescopeDomain =
-      props.descopeProjectId && props.descopeProjectId.length === 32
-        ? "https://api.euc1.descope.com"
-        : "https://api.descope.com";
-
-    this.managementBaseUrl = props.descopeDomain || this.defaultDescopeDomain;
-    this.jwtIssuer = `https://${props.descopeDomain}/${props.descopeProjectId}`;
-    this.tokenEndpoint = `https://${props.descopeDomain}/oauth2/v1/token`;
-    this.wellKnownEndpointUrl = `https://${props.descopeDomain}/.well-known/openid-configuration`;
-
-    // SSM parameter for client secret management key
+    /*
+     * Sets SSM Parameter for Secret Management Key
+     */
     const clientSecretSSMMgmtKey =
       ssm.StringParameter.fromSecureStringParameterAttributes(
         this,
@@ -120,17 +103,21 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       }:017000801446:layer:AWSLambdaPowertoolsPythonV2:59`
     );
 
-    // Create helper which help access the Descope Library
+    /*
+     * Creates and initializes DescopeClient with SSM Parameter for Management Key
+     */
     const descopeHelperLayer = new PythonLayerVersion(
       this,
       "DescopeHelperLayer",
       {
-        entry: path.join(__dirname, "../resources/functions/helper"),
+        entry: path.join(__dirname, "../resources/layers/helper"),
         compatibleRuntimes: [lambda.Runtime.PYTHON_3_12],
       }
     );
 
-    // using extension that allows to read ssm parameters
+    /*
+     * Extension that gives permissions for SSM parameters
+     */
     const parametersAndSecretsLambdaExtensionLayerTable = new cdk.CfnMapping(
       this,
       "RegionTable",
@@ -166,6 +153,70 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         )
       );
 
+    const lambdaFunctionsLayers = [
+      lambdaPowerToolsLayer,
+      descopeHelperLayer,
+      parametersAndSecretsLambdaExtensionLayer,
+    ];
+
+    /*
+     * Sets up Client Function for
+     */
+    this.createClientFunction = new PythonFunction(
+      this,
+      "createClientFunction",
+      {
+        entry: path.join(
+          __dirname,
+          "../../../resources/functions/create-client"
+        ),
+        runtime: Runtime.PYTHON_3_12,
+        index: "index.py",
+        handler: "lambda_handler",
+        timeout: Duration.seconds(60),
+        layers: lambdaFunctionsLayers,
+        environment: {
+          CLIENT_ID: props.descopeProjectId,
+          CLIENT_SECRET_PARAMETER_NAME: clientSecretSSMMgmtKey.parameterName,
+        },
+      }
+    );
+    clientSecretSSMMgmtKey.grantRead(this.createClientFunction);
+
+    // Set default domain if descopeProjectId has correct length
+    this.defaultDescopeDomain =
+      props.descopeProjectId && props.descopeProjectId.length === 32
+        ? "https://api.euc1.descope.com"
+        : "https://api.descope.com";
+
+    this.managementBaseUrl = props.descopeDomain || this.defaultDescopeDomain;
+    this.jwtIssuer = `https://${props.descopeDomain}/${props.descopeProjectId}`;
+    this.jwtAudience = [props.descopeProjectId];
+    this.tokenEndpoint = `https://${props.descopeDomain}/oauth2/v1/token`;
+    this.wellKnownEndpointUrl = `https://${props.descopeDomain}/.well-known/openid-configuration`;
+
+    const machineClientResource = this.createMachineClient(
+      this,
+      "MachineClient",
+      {
+        name: "SBT Auto-generated Access Key",
+        description:
+          "Auto generated Access Key to be used with Client Credentials Flow",
+      }
+    );
+
+    this.machineClientId = machineClientResource.getAttString("ClientId");
+    new cdk.CfnOutput(this, "machineClientId", { value: this.machineClientId });
+
+    // TODO: How to set it as a secret, instead of a String?
+    this.machineClientSecret = cdk.SecretValue.resourceAttribute(
+      machineClientResource.getAttString("ClientSecret")
+    );
+
+    // Default SSO application is the only user client that's currently supported.
+    this.userClientId = props.descopeProjectId;
+    new cdk.CfnOutput(this, "userClientId", { value: this.userClientId });
+
     // Lambda function for user management services
     const userManagementServices = new PythonFunction(
       this,
@@ -179,9 +230,8 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         index: "index.py",
         handler: "lambda_handler",
         timeout: Duration.seconds(60),
-        layers: [lambdaPowerToolsLayer],
+        layers: lambdaFunctionsLayers,
         environment: {
-          DOMAIN: props.descopeDomain,
           CLIENT_ID: props.descopeProjectId,
           CLIENT_SECRET_PARAMETER_NAME: clientSecretSSMMgmtKey.parameterName,
         },
@@ -189,20 +239,27 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     );
     clientSecretSSMMgmtKey.grantRead(userManagementServices);
 
-    // Define user operation Lambda functions
-    this.createUserFunction = userManagementServices;
-    this.fetchAllUsersFunction = userManagementServices;
-    this.fetchUserFunction = userManagementServices;
-    this.updateUserFunction = userManagementServices;
-    this.deleteUserFunction = userManagementServices;
-    this.disableUserFunction = userManagementServices;
-    this.enableUserFunction = userManagementServices;
-
-    this.createUserFunction = userManagementServices;
+    this.createAdminUserFunction = new PythonFunction(
+      this,
+      "CreateAdminUserFunction",
+      {
+        entry: path.join(
+          __dirname,
+          "../../../resources/functions/create-admin"
+        ),
+        runtime: Runtime.PYTHON_3_12,
+        index: "index.py",
+        handler: "handler",
+        timeout: Duration.seconds(60),
+        layers: lambdaFunctionsLayers,
+        environment: {},
+      }
+    );
 
     NagSuppressions.addResourceSuppressions(
       [
         this.createClientFunction.role!,
+        // TODO: Figure out which privileges in AWS make sense to use for User Management
         userManagementServices.role!,
         this.createAdminUserFunction.role!,
       ],
@@ -221,28 +278,23 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
   createMachineClient(
     scope: Construct,
     id: string,
-    props: sbt.CreateAdminUserProps
-  ): void {
-    new cdk.CustomResource(scope, id, {
+    props: CreateMachineClientProps
+  ): cdk.CustomResource {
+    return new cdk.CustomResource(scope, `createClientCustomResource-${id}`, {
       serviceToken: this.createAdminUserFunction.functionArn,
       properties: {
-        Email: props.email,
-        role: props.role,
-        Name: props.name,
+        Name: props.name ? props.name : id,
+        ...(props.description && { Description: props.description }),
       },
     });
   }
-  createAdminUser(
-    scope: Construct,
-    id: string,
-    props: cdk.CreateAdminUserProps
-  ) {
+  createAdminUser(scope: Construct, id: string) {
     new CustomResource(scope, `createAdminUserCustomResource-${id}`, {
       serviceToken: this.createAdminUserFunction.functionArn,
       properties: {
-        Name: props.name,
-        Email: props.email,
-        DisplayName: props.display_name,
+        Name: "Dummy Name",
+        Email: "Dummy Email",
+        DisplayName: "Dummy Display Name",
       },
     });
   }
