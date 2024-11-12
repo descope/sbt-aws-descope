@@ -113,16 +113,17 @@ descopeAuth.createM2MClient(this, "M2MClient", {
 
 This will create a client in Descope for M2M authentication and store the client credentials securely.
 
-### 4. Implement Session Validation
+### 4. Implementing Descope in your SaaS Application
 
-DescopeAuth automatically sets up session validation using the Descope well-known configuration. This enables your application to validate user sessions seamlessly, ensuring that only authenticated and authorized users can access your resources.
+> You will not be able to configure additional [Applications](https://docs.descope.com/sso-integrations/applications) in Descope through the SBT plugin. You must do that in the [Descope Console](https://app.descope.com/applications) itself.
 
-```typescript
-// The DescopeAuth construct handles session validation internally.
-// Ensure that your application uses the provided authentication middleware or utilities.
-```
+Once you've setup `DescopeAuth` and SBT, you'll need to actually implement Descope authentication and our SDKs into your SaaS application. We have two primary ways of integrating into an application, either via our web component and client SDKs (for an embedded flow experience), or with our [Auth Hosting](https://docs.descope.com/auth-hosting-app) application and OIDC/SAML.
 
-### 5. Utilize User Management Functions
+For setup guides for both, visit our [Quickstart](https://docs.descope.com/getting-started) page on our docs.
+
+In either case, you will recieve a JWT after being authenticated, that you will be able to use with your SBT resources.
+
+### 5. Utilize User Management Functions (Optional)
 
 The DescopeAuth construct provides comprehensive user management functions that integrate with SBT API routes. You can create, update, delete, and manage users programmatically.
 
@@ -176,4 +177,4 @@ Development is ongoing with `DescopeAuth`, and limitations may exist. Future upd
 
 ---
 
-If you have any questions or need assistance, please refer to the [Descope documentation](https://docs.descope.com/) or the [AWS SBT repository](https://github.com/awslabs/sbt-aws).
+If you have any questions or need assistance, please refer to the [Descope Documentation](https://docs.descope.com/) or the [AWS SBT repository](https://github.com/awslabs/sbt-aws).
