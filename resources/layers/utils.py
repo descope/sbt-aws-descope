@@ -18,5 +18,4 @@ def _get_secret_ssm_parameter_from_extension(name: str):
 
 def get_descope_handler(project_id, client_secret_mgmt_key):
     mgmt_key = _get_secret_ssm_parameter_from_extension(client_secret_mgmt_key)
-    # TODO: Add Base URL support
     return DescopeClient(project_id, mgmt_key)

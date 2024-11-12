@@ -1,12 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// import { IAuth } from '@cdklabs/sbt-aws';
 import {
   PythonFunction,
   PythonLayerVersion,
 } from "@aws-cdk/aws-lambda-python-alpha";
-import * as cdk from "aws-cdk-lib";
 import {
   aws_logs as AwsLogs,
   CustomResource,
@@ -16,7 +14,9 @@ import {
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Runtime, IFunction, LayerVersion } from "aws-cdk-lib/aws-lambda";
+import * as sbt from "@cdklabs/sbt-aws";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as cdk from "aws-cdk-lib";
 import * as path from "path";
 import * as ssm from "aws-cdk-lib/aws-ssm";
 import { addTemplateTag } from "../../utils";
@@ -33,7 +33,7 @@ export interface DescopeAuthProps {
   readonly descopeProjectId: string;
 
   /**
-   * Override the base URL for the Descope Management API. For most setups, you don't need to set this.
+   * Override the base URL for the well-known configuration.
    * @default defaultDescopeDomain
    */
   readonly descopeDomain?: string;
@@ -56,29 +56,15 @@ export interface DescopeAuthProps {
    * This is to make calls to Descope Management APIs.
    */
   readonly clientSecretSSMMgmtKey: string;
-
-  readonly userClientProtocol: string;
 }
 
 export interface CreateUserClientProps {
   readonly name?: string;
   readonly description?: string;
   readonly callbacks?: string[];
-  readonly protocol?: UserClientProtocol;
 }
 
-export enum ClientGrantType {
-  CLIENT_CREDENTIALS = "client_credentials",
-  IMPLICIT = "implicit",
-  AUTHORIZATION_CODE = "authorization_code",
-}
-
-export enum UserClientProtocol {
-  CLIENT_SAML = "saml",
-  CLIENT_OIDC = "oidc",
-}
-
-export class DescopeAuth extends Construct implements cdk.IAuth {
+export class DescopeAuth extends Construct implements sbt.IAuth {
   readonly jwtIssuer: string;
   readonly jwtAudience: string[];
   readonly managementBaseUrl: string;
@@ -213,46 +199,37 @@ export class DescopeAuth extends Construct implements cdk.IAuth {
     this.enableUserFunction = userManagementServices;
 
     this.createUserFunction = userManagementServices;
-    // Create Admin User Function
-    this.createAdminUserFunction = new PythonFunction(
-      this,
-      "createAdminUserFunction",
-      {
-        entry: path.join(
-          __dirname,
-          "../../../resources/functions/auth-custom-resource"
-        ),
-        runtime: Runtime.PYTHON_3_12,
-        index: "index.py",
-        handler: "handler",
-        timeout: Duration.seconds(60),
-        layers: [lambdaPowerToolsLayer],
-      }
-    );
-    clientSecretSSMMgmtKey.grantRead(this.createAdminUserFunction);
-  }
 
-  /**
-   * Helper function to define Lambda functions for each user operation.
-   */
-  private defineUserOperationFunction(
-    functionName: string,
-    operation: string,
-    descopeHelperLayer: LayerVersion,
-    lambdaPowerToolsLayer: LayerVersion,
-    environmentVars: { [key: string]: string }
-  ): IFunction {
-    return new PythonFunction(this, functionName, {
-      entry: path.join(
-        __dirname,
-        "../../../resources/functions/user-management"
-      ),
-      runtime: Runtime.PYTHON_3_12,
-      index: "index.py",
-      handler: `${operation}.lambda_handler`,
-      timeout: Duration.seconds(60),
-      layers: [descopeHelperLayer, lambdaPowerToolsLayer],
-      environment: environmentVars,
+    NagSuppressions.addResourceSuppressions(
+      [
+        this.createClientFunction.role!,
+        userManagementServices.role!,
+        this.createAdminUserFunction.role!,
+      ],
+      [
+        {
+          id: "AWSSolutions-IAM4",
+          reason: "Supress usage of AWSLambdaBasicExecution role.",
+          appliesTo: [
+            "Policy::arn::<AWS::Partition>:iam:aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          ],
+        },
+      ]
+    );
+  }
+  // Create Admin User Function
+  createMachineClient(
+    scope: Construct,
+    id: string,
+    props: sbt.CreateAdminUserProps
+  ): void {
+    new cdk.CustomResource(scope, id, {
+      serviceToken: this.createAdminUserFunction.functionArn,
+      properties: {
+        Email: props.email,
+        role: props.role,
+        Name: props.name,
+      },
     });
   }
   createAdminUser(
