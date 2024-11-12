@@ -178,7 +178,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       this,
       "createClientFunction",
       {
-        entry: path.resolve(__dirname, "../resources/functions/create-client"),
+        entry: path.join(__dirname, "../resources/functions/create-client"),
         runtime: Runtime.PYTHON_3_12,
         index: "index.py",
         handler: "lambda_handler",
