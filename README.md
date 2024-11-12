@@ -16,7 +16,7 @@ For more information on SaaS best practices, see the [AWS SaaS Builder Toolkit (
   - [1. Install the NPM Package](#1-install-the-npm-package)
   - [2. Add DescopeAuth to Your Control Plane](#2-add-descopeauth-to-your-control-plane)
   - [3. Set Up Machine-to-Machine (M2M) Authentication](#3-set-up-machine-to-machine-m2m-authentication)
-  - [4. Implement Session Validation](#4-implement-session-validation)
+  - [4. Implementing Descope in Your SaaS Application](#4-implementing-descope-in-your-saas-application)
   - [5. Utilize User Management Functions](#5-utilize-user-management-functions)
 - [DescopeAuth Properties](#descopeauth-properties)
 - [Limitations](#limitations)
@@ -113,9 +113,9 @@ descopeAuth.createM2MClient(this, "M2MClient", {
 
 This will create a client in Descope for M2M authentication and store the client credentials securely.
 
-### 4. Implementing Descope in your SaaS Application
+### 4. Implementing Descope in Your SaaS Application
 
-> You will not be able to configure additional [Applications](https://docs.descope.com/sso-integrations/applications) in Descope through the SBT plugin. You must do that in the [Descope Console](https://app.descope.com/applications) itself.
+> **Callout**: You will not be able to configure additional [Applications](https://docs.descope.com/sso-integrations/applications) in Descope through the SBT plugin. You must do that in the [Descope Console](https://app.descope.com/applications) itself.
 
 Once you've setup `DescopeAuth` and SBT, you'll need to actually implement Descope authentication and our SDKs into your SaaS application. We have two primary ways of integrating into an application, either via our web component and client SDKs (for an embedded flow experience), or with our [Auth Hosting](https://docs.descope.com/auth-hosting-app) application and OIDC/SAML.
 
@@ -123,7 +123,9 @@ For setup guides for both, visit our [Quickstart](https://docs.descope.com/getti
 
 In either case, you will recieve a JWT after being authenticated, that you will be able to use with your SBT resources.
 
-### 5. Utilize User Management Functions (Optional)
+### 5. Utilize User Management Functions
+
+> **Optional**: This part is optional, as you may not require user management functions in your backend via APIs if everything is handled with Flows.
 
 The DescopeAuth construct provides comprehensive user management functions that integrate with SBT API routes. You can create, update, delete, and manage users programmatically.
 
