@@ -122,7 +122,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       this,
       "DescopeHelperLayer",
       {
-        entry: path.join(__dirname, "../resources/layers/helper"),
+        entry: path.resolve(__dirname, "../resources/layers/helper/utils.py"),
         compatibleRuntimes: [lambda.Runtime.PYTHON_3_12],
       }
     );
@@ -178,10 +178,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       this,
       "createClientFunction",
       {
-        entry: path.join(
-          __dirname,
-          "../../../resources/functions/create-client"
-        ),
+        entry: path.resolve(__dirname, "../resources/functions/create-client"),
         runtime: Runtime.PYTHON_3_12,
         index: "index.py",
         handler: "lambda_handler",
@@ -231,9 +228,9 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       this,
       "userManagementServices",
       {
-        entry: path.join(
+        entry: path.resolve(
           __dirname,
-          "../../../resources/functions/user-management"
+          "../resources/functions/user-management"
         ),
         runtime: Runtime.PYTHON_3_12,
         index: "index.py",
@@ -253,10 +250,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       this,
       "CreateAdminUserFunction",
       {
-        entry: path.join(
-          __dirname,
-          "../../../resources/functions/create-admin"
-        ),
+        entry: path.resolve(__dirname, "../resources/functions/create-admin"),
         runtime: Runtime.PYTHON_3_12,
         index: "index.py",
         handler: "handler",
