@@ -22,7 +22,7 @@ This repository provides a detailed implementation of the Descope authentication
 With Descope you can simplify the implementation of secure authentication and identity management for developers and businesses, allowing them to focus on their core product features while ensuring robust security for their users. It makes it very easy to enable a variety of different user authentication methods in your application. Descope also helps in preventing attackers from breaking authentication through session theft, credential stuffing, brute force, and other exploit methods.
 
 <p align="center">
-  <img src="images/descope.png" alt="Descope" style="max-width: 100%; height: auto;">
+  <img src="images/descopelogo.png" alt="Descope" style="max-width: 100%; height: auto;">
 </p>
 
 With Descope, you can:
