@@ -1,6 +1,6 @@
 ### Overview
 
-This module extends the AWS SaaS Builder ToolKit (SBT) by integrating Descope as the main authentication provider, enabling seamless user authentication of your customers. With this integration, you can effortlessly implement an SBT plugin using Descope. modern, usage-based billing for your SaaS and GenAI applications out-of-the-box.
+This module extends the AWS SaaS Builder ToolKit (SBT) by integrating Descope as the main authentication provider, enabling seamless user authentication of your customers. With this integration, you can effortlessly implement an SBT plugin using Descope.
 
 Sign up for your [free Descope Account](https://www.descope.com/sign-up) to start using the auth SBT plugin.
 
