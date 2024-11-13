@@ -201,24 +201,6 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     );
     clientSecretSSMMgmtKey.grantRead(this.createMachineClientFunction);
 
-    // // Define the custom resource provider
-    // const provider = new Provider(this, "Provider", {
-    //   onEventHandler: this.createMachineClientFunction,
-    // });
-
-    // // Create the custom resource
-    // const customResource = new CustomResource(
-    //   this,
-    //   "machineClientCustomResource",
-    //   {
-    //     serviceToken: provider.serviceToken,
-    //     properties: {
-    //       name: "SBT Access Key",
-    //       description: "Auto-generated Access Key for SBT",
-    //     },
-    //   }
-    // );
-
     const machineClientResource = this.createMachineClient(
       this,
       "MachineClient",
@@ -324,8 +306,12 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       },
     });
   }
-  createAdminUser(scope: Construct, id: string, props: CreateAdminUserProps) {
-    new CustomResource(scope, `createAdminUserCustomResource-v2-${id}`, {
+  createAdminUser(
+    scope: Construct,
+    id: string,
+    props: CreateAdminUserProps
+  ): cdk.CustomResource {
+    return new CustomResource(scope, `createAdminUserCustomResource-v2-${id}`, {
       serviceToken: this.createAdminUserFunction.functionArn,
       properties: {
         Name: props.name,
