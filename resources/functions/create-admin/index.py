@@ -13,14 +13,23 @@ helper = CfnResource()
 @helper.create
 def create_user(event, _):
     """
-    Dummy function to create admin user in Descope. Descopers can only be created in Descope Console.
+    Dummy function to simulate the creation of an admin user in Descope.
+    Actual admin users should be created in the Descope Console.
 
     Args:
         event (dict): The event payload from CloudFormation.
         _ (context): The context object (unused).
     """
-
-    print("No admin user was created. Please use Descope Console to do so.")
+    logger.info(
+        "No admin user was created. Please use Descope Console to create admin users."
+    )
+    # Send a response back with dummy data
+    helper.Data.update(
+        {
+            "Status": "No action taken",
+            "Message": "Please create admin users via the Descope Console.",
+        }
+    )
 
 
 def handler(event, context):

@@ -2,12 +2,7 @@ import {
   PythonFunction,
   PythonLayerVersion,
 } from "@aws-cdk/aws-lambda-python-alpha";
-import {
-  aws_logs as AwsLogs,
-  CustomResource,
-  Duration,
-  RemovalPolicy,
-} from "aws-cdk-lib";
+import { aws_logs, Duration, CustomResource } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Runtime, LayerVersion } from "aws-cdk-lib/aws-lambda";
 import { Provider } from "aws-cdk-lib/custom-resources";
@@ -92,9 +87,13 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
   readonly deleteUserFunction: lambda.IFunction;
   readonly disableUserFunction: lambda.IFunction;
   readonly enableUserFunction: lambda.IFunction;
+  readonly logGroupName: string;
 
+  // Only used in initialization
+  private readonly createMachineClientFunction: lambda.IFunction;
   private readonly createAdminUserFunction: lambda.IFunction;
-  private readonly createClientFunction: lambda.IFunction;
+
+  // For base url for Descope Management SDK
   private readonly defaultDomain: string;
 
   constructor(scope: Construct, id: string, props: DescopeAuthProps) {
@@ -179,9 +178,9 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     ];
 
     /*
-     * Sets up Client Function for
+     * Sets up Client Function for Creating Machine Client
      */
-    this.createClientFunction = new PythonFunction(
+    this.createMachineClientFunction = new PythonFunction(
       this,
       "CreateClientFunction",
       {
@@ -197,7 +196,32 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         },
       }
     );
-    clientSecretSSMMgmtKey.grantRead(this.createClientFunction);
+    clientSecretSSMMgmtKey.grantRead(this.createMachineClientFunction);
+
+    // Define the custom resource provider
+    const provider = new Provider(this, "Provider", {
+      onEventHandler: this.createMachineClientFunction,
+    });
+
+    // Create the custom resource
+    const customResource = new CustomResource(
+      this,
+      "CreateMachineClientCustomResource",
+      {
+        serviceToken: provider.serviceToken,
+        properties: {
+          name: "SBT Access Key",
+          description: "Auto-generated Access Key for SBT",
+        },
+      }
+    );
+
+    this.machineClientId = customResource.getAttString("ClientId");
+    new cdk.CfnOutput(this, "machineClientId", { value: this.machineClientId });
+
+    this.machineClientSecret = cdk.SecretValue.resourceAttribute(
+      customResource.getAttString("ClientSecret")
+    );
 
     // Set base url based on project id length
     this.defaultDomain = baseUrlForProjectId(props.projectId);
@@ -207,23 +231,6 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     this.jwtAudience = [props.projectId];
     this.tokenEndpoint = `https://${props.domain}/oauth2/v1/token`;
     this.wellKnownEndpointUrl = `https://${props.domain}/.well-known/openid-configuration`;
-
-    const machineClientResource = this.createMachineClient(
-      this,
-      "MachineClient",
-      {
-        name: "SBT Auto-generated Access Key",
-        description:
-          "Auto generated Access Key to be used with Client Credentials Flow",
-      }
-    );
-
-    this.machineClientId = machineClientResource.getAttString("ClientId");
-    new cdk.CfnOutput(this, "machineClientId", { value: this.machineClientId });
-
-    this.machineClientSecret = cdk.SecretValue.resourceAttribute(
-      machineClientResource.getAttString("ClientSecret")
-    );
 
     // Default SSO application is the only user client that's currently supported.
     this.userClientId = props.projectId;
@@ -249,25 +256,17 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     );
     clientSecretSSMMgmtKey.grantRead(userManagementServices);
 
-    this.createAdminUserFunction = new PythonFunction(
-      this,
-      "CreateAdminUserFunction",
-      {
-        entry: path.join(__dirname, "../resources/functions/create-admin"),
-        runtime: Runtime.PYTHON_3_12,
-        index: "index.py",
-        handler: "handler",
-        timeout: Duration.seconds(60),
-        layers: lambdaFunctionsLayers,
-      }
-    );
+    // Define user operation Lambda functions
+    this.createUserFunction = userManagementServices;
+    this.fetchAllUsersFunction = userManagementServices;
+    this.fetchUserFunction = userManagementServices;
+    this.updateUserFunction = userManagementServices;
+    this.deleteUserFunction = userManagementServices;
+    this.disableUserFunction = userManagementServices;
+    this.enableUserFunction = userManagementServices;
 
     NagSuppressions.addResourceSuppressions(
-      [
-        this.createClientFunction.role!,
-        userManagementServices.role!,
-        this.createAdminUserFunction.role!,
-      ],
+      [this.createMachineClientFunction.role!, userManagementServices.role!],
       [
         {
           id: "AWSSolutions-IAM4",
@@ -278,20 +277,22 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         },
       ]
     );
-  }
-  // Create Admin User Function
-  createMachineClient(
-    scope: Construct,
-    id: string,
-    props: CreateMachineClientProps
-  ): cdk.CustomResource {
-    return new cdk.CustomResource(scope, `createClientCustomResource-${id}`, {
-      serviceToken: this.createClientFunction.functionArn,
-      properties: {
-        Name: props.name,
-        Description: props.description,
-      },
-    });
+
+    this.createAdminUserFunction = new PythonFunction(
+      this,
+      "CreateAdminUserFunction",
+      {
+        entry: path.resolve(__dirname, "../resources/functions/create-admin"),
+        runtime: Runtime.PYTHON_3_12,
+        index: "index.py",
+        handler: "handler",
+        timeout: Duration.seconds(5), // Short timeout for minimal impact
+        layers: lambdaFunctionsLayers,
+        environment: {
+          DESCOPE_PROJECT_ID: props.projectId,
+        },
+      }
+    );
   }
   createAdminUser(
     scope: Construct,
@@ -303,6 +304,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       properties: {
         Name: props.name,
         Email: props.email,
+        Role: props.role,
       },
     });
   }

@@ -1,6 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
-import { DescopeAuth } from "../src/DescopeAuth";
+import { DescopeAuth } from "../lib/descope-auth";
 
 test("Descope Auth Lambdas Created", () => {
   const app = new cdk.App();
