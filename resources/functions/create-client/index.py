@@ -28,31 +28,37 @@ def create_client(event, _):
     # Initialize the Descope client
     descope = get_descope_handler(project_id, descope_mgmt_key)
     request = event.get("ResourceProperties", {})
-    name = request.body("name")
-    description = request.body("description")
+    name = request.get("name")
+    description = request.get("description")
 
     try:
         logger.info("Creating a new access key...")
         client_data = {
             "name": name,
+            "expire_time": 0,
             "description": description,
         }
 
         # Create the access key
-        client = descope.mgmt.access_key.create(**client_data)
+        response = descope.mgmt.access_key.create(**client_data)
 
-        # Extract the client ID and access key ID
-        client_id = client["key"]["clientId"]
-        access_key_id = client["key"]["id"]
+        logger.info(f"Descope response: {response}")
+
+        # Extract the client ID and secret from the response
+        client_id = response["key"].get("clientId")
+        client_secret = response.get("cleartext")
+
+        if not client_secret:
+            raise ValueError("ClientSecret not found in Descope response.")
 
         # Log the access key details
-        logger.info(f"Access key created: {access_key_id}")
+        logger.info(f"Access key created with ClientId: {client_id}")
 
         # Return data to CloudFormation
         helper.Data.update(
             {
                 "ClientId": client_id,
-                "ClientSecret": access_key_id,  # Returning only the key, not the entire response
+                "ClientSecret": client_secret,  # Returning both client ID and secret
             }
         )
     except Exception as e:

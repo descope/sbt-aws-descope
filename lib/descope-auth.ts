@@ -112,6 +112,12 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         }
       );
 
+    const environmentVariables = {
+      DESCOPE_PROJECT_ID: props.projectId,
+      DESCOPE_MANAGEMENT_KEY: clientSecretSSMMgmtKey.parameterName,
+      DESCOPE_BASE_URI: this.defaultDomain,
+    };
+
     // https://docs.powertools.aws.dev/lambda/python/2.31.0/#lambda-layer
     const lambdaPowerToolsLayer = LayerVersion.fromLayerVersionArn(
       this,
@@ -187,13 +193,10 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         entry: path.resolve(__dirname, "../resources/functions/create-client"),
         runtime: Runtime.PYTHON_3_12,
         index: "index.py",
-        handler: "lambda_handler",
+        handler: "handler",
         timeout: Duration.seconds(60),
         layers: [descopeHelperLayer],
-        environment: {
-          DESCOPE_PROJECT_ID: props.projectId,
-          DESCOPE_MANAGEMENT_KEY: clientSecretSSMMgmtKey.parameterName,
-        },
+        environment: environmentVariables,
       }
     );
     clientSecretSSMMgmtKey.grantRead(this.createMachineClientFunction);
@@ -206,7 +209,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     // Create the custom resource
     const customResource = new CustomResource(
       this,
-      "CreateMachineClientCustomResource",
+      "machineClientCustomResource",
       {
         serviceToken: provider.serviceToken,
         properties: {
@@ -224,11 +227,16 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     );
 
     // Ensure the domain is valid or fallback to a generated default domain
-    const validateDomain = (domain: string | undefined): string => {
-      if (domain && domain.startsWith("https://") && !domain.endsWith("/")) {
-        return domain;
+    const validateDomain = (domain?: string): string => {
+      if (!domain) {
+        return baseUrlForProjectId(props.projectId);
       }
-      return baseUrlForProjectId(props.projectId);
+      if (!domain.startsWith("https://") || domain.endsWith("/")) {
+        throw new Error(
+          "Invalid domain format. It must start with 'https://' and not end with '/'."
+        );
+      }
+      return domain;
     };
 
     this.defaultDomain = validateDomain(props.domain);
@@ -251,14 +259,10 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         entry: path.join(__dirname, "../resources/functions/user-management"),
         runtime: Runtime.PYTHON_3_12,
         index: "index.py",
-        handler: "lambda_handler",
+        handler: "handler",
         timeout: Duration.seconds(60),
         layers: lambdaFunctionsLayers,
-        environment: {
-          DESCOPE_PROJECT_ID: props.projectId,
-          DESCOPE_MANAGEMENT_KEY: clientSecretSSMMgmtKey.parameterName,
-          DESCOPE_BASE_URI: this.defaultDomain,
-        },
+        environment: environmentVariables,
       }
     );
     clientSecretSSMMgmtKey.grantRead(userManagementServices);
@@ -293,20 +297,13 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         runtime: Runtime.PYTHON_3_12,
         index: "index.py",
         handler: "handler",
-        timeout: Duration.seconds(5), // Short timeout for minimal impact
+        timeout: Duration.seconds(60),
         layers: lambdaFunctionsLayers,
-        environment: {
-          DESCOPE_PROJECT_ID: props.projectId,
-        },
       }
     );
   }
-  createAdminUser(
-    scope: Construct,
-    id: string,
-    props: CreateAdminUserProps
-  ): void {
-    new CustomResource(scope, `createAdminUserCustomResource-${id}`, {
+  createAdminUser(scope: Construct, id: string, props: CreateAdminUserProps) {
+    new CustomResource(scope, `createAdminUserCustomResource-v2-${id}`, {
       serviceToken: this.createAdminUserFunction.functionArn,
       properties: {
         Name: props.name,
