@@ -149,11 +149,11 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         mapping: {
           "us-east-1": {
             layerArn:
-              "arn:aws:lambda:us-east-1:177933569100:layer:AWS-Parameters-and-Secrets-Lambda-Extension:11",
+              "arn:aws:lambda:us-east-1:177933569100:layer:AWS-Parameters-and-Secrets-Lambda-Extension:2",
           },
           "us-east-2": {
             layerArn:
-              "arn:aws:lambda:us-east-2:590474943231:layer:AWS-Parameters-and-Secrets-Lambda-Extension:14",
+              "arn:aws:lambda:us-east-2:590474943231:layer:AWS-Parameters-and-Secrets-Lambda-Extension:2",
           },
           "us-west-2": {
             layerArn:
