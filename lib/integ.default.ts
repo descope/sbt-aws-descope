@@ -1,6 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import * as sbt from "@cdklabs/sbt-aws";
-import { DescopeAuth } from "./DescopeAuth";
+import { DescopeAuth } from "./descope-auth";
 
 export interface IntegStackProps extends cdk.StackProps {
   systemAdminEmail: string;
