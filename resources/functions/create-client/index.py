@@ -11,8 +11,8 @@ logger.setLevel(logging.INFO)
 helper = CfnResource()
 
 # Retrieve Descope project credentials from environment variables or configuration
-project_id = os.environ.get("DESCOPE_PROJECT_ID")
-descope_mgmt_key = os.environ.get("DESCOPE_MANAGEMENT_KEY")
+project_id = os.environ.get("DescopeProjectId")
+descope_mgmt_key = os.environ.get("ManagementSSMKeyName")
 
 
 @helper.create

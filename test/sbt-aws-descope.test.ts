@@ -8,7 +8,8 @@ test("Descope Auth Lambdas Created", () => {
 
   new DescopeAuth(stack, "DescopeAuth", {
     projectId: "<<Your Descope Project ID>>",
-    mgmtSSMKey: "<<Your Descope Management Key>>",
+    clientSecretSSMMgmtKey:
+      "<<Your SSM Parameter Name for Descope Management Key>>",
     domain: "https://example.com",
   });
 

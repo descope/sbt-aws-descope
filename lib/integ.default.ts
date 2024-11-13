@@ -12,13 +12,14 @@ export class IntegStack extends cdk.Stack {
 
     const descopeAuth = new DescopeAuth(this, "DescopeAuth", {
       projectId: "<<Descope Project ID>>",
-      mgmtSSMKey: "<<Descope Management Key>>",
+      clientSecretSSMMgmtKey:
+        "<<Your SSM Parameter Name for Descope Management Key>>",
       setAPIGWScopes: true,
     });
 
-    // const controlPlane = new sbt.ControlPlane(this, "ControlPlane", {
-    //   auth: descopeAuth,
-    //   systemAdminEmail: props.systemAdminEmail,
-    // });
+    const controlPlane = new sbt.ControlPlane(this, "ControlPlane", {
+      auth: descopeAuth,
+      systemAdminEmail: props.systemAdminEmail,
+    });
   }
 }
