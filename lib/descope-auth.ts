@@ -149,19 +149,19 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         mapping: {
           "us-east-1": {
             layerArn:
-              "arn:aws:lambda:us-east-1:177933569100:layer:AWS-Parameters-and-Secrets-Lambda-Extension:2",
+              "arn:aws:lambda:us-east-1:177933569100:layer:AWS-Parameters-and-Secrets-Lambda-Extension:12",
           },
           "us-east-2": {
             layerArn:
-              "arn:aws:lambda:us-east-2:590474943231:layer:AWS-Parameters-and-Secrets-Lambda-Extension:2",
+              "arn:aws:lambda:us-east-2:590474943231:layer:AWS-Parameters-and-Secrets-Lambda-Extension:14",
           },
           "us-west-2": {
             layerArn:
-              "arn:aws:lambda:us-west-2:345057560386:layer:AWS-Parameters-and-Secrets-Lambda-Extension:11",
+              "arn:aws:lambda:us-west-2:345057560386:layer:AWS-Parameters-and-Secrets-Lambda-Extension:12",
           },
           "ca-central-1": {
             layerArn:
-              "arn:aws:lambda:ca-central-1:200266452380:layer:AWS-Parameters-and-Secrets-Lambda-Extension:11",
+              "arn:aws:lambda:ca-central-1:200266452380:layer:AWS-Parameters-and-Secrets-Lambda-Extension:12",
           },
         },
       }
@@ -301,8 +301,8 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     return new CustomResource(scope, `createClientCustomResource-${id}*`, {
       serviceToken: this.createMachineClientFunction.functionArn,
       properties: {
-        Name: props.name ? props.name : id,
-        ...(props.description && { Description: props.description }),
+        name: props.name,
+        description: props.description,
       },
     });
   }
