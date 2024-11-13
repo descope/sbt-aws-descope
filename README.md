@@ -61,6 +61,8 @@ The `DescopeAuth` construct deploys AWS Lambda functions and necessary configura
 
 ## How to Use
 
+> **Note**: Before you start this process, ensure that your Descope Project is correctly configured with an [AWS API Gateway JWT Template](https://docs.descope.com/session-validation/oidc-jwt-authorizers/aws-jwt-authorizer). Please create the JWT template, and apply it to your Project, under [Project Settings](https://app.descope.com/settings/project) before continuing.
+
 ### 1. Install the NPM Package
 
 In your SBT project directory, install the Descope authentication package:

@@ -223,14 +223,21 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       customResource.getAttString("ClientSecret")
     );
 
-    // Set base url based on project id length
-    this.defaultDomain = baseUrlForProjectId(props.projectId);
+    // Ensure the domain is valid or fallback to a generated default domain
+    const validateDomain = (domain: string | undefined): string => {
+      if (domain && domain.startsWith("https://") && !domain.endsWith("/")) {
+        return domain;
+      }
+      return baseUrlForProjectId(props.projectId);
+    };
 
-    this.managementBaseUrl = props.domain || this.defaultDomain;
-    this.jwtIssuer = `https://${props.domain}/${props.projectId}`;
+    this.defaultDomain = validateDomain(props.domain);
+
+    this.managementBaseUrl = this.defaultDomain;
+    this.jwtIssuer = `https://${this.defaultDomain}/${props.projectId}`;
     this.jwtAudience = [props.projectId];
-    this.tokenEndpoint = `https://${props.domain}/oauth2/v1/token`;
-    this.wellKnownEndpointUrl = `https://${props.domain}/.well-known/openid-configuration`;
+    this.tokenEndpoint = `https://${this.defaultDomain}/oauth2/v1/token`;
+    this.wellKnownEndpointUrl = `https://${this.defaultDomain}/.well-known/openid-configuration`;
 
     // Default SSO application is the only user client that's currently supported.
     this.userClientId = props.projectId;
