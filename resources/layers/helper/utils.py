@@ -24,4 +24,6 @@ def _get_secret_ssm_parameter_from_extension(name: str):
 def get_descope_handler(project_id, mgmt_key_name):
     # Retrieve the actual management key from SSM using the parameter name
     mgmt_key = _get_secret_ssm_parameter_from_extension(mgmt_key_name)
+    print(f"Retrieved management key: {mgmt_key}")
+
     return DescopeClient(project_id=project_id, key=mgmt_key)
