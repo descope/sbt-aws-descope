@@ -24,7 +24,6 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - name: Install dependencies
         run: yarn install
-      - run: yarn prepare --if-present
 
       - name: Publish to NPM Package Registry
         run: yarn publish --access=public
