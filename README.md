@@ -40,6 +40,8 @@ Descope offers:
 
 This plugin’s `DescopeAuth` construct implements the [`IAuth`](https://github.com/awslabs/sbt-aws/blob/main/API.md#iauth-) interface, allowing you to use Descope as the main authentication provider in your SBT-based applications.
 
+<img width="1052" alt="image" src="https://github.com/user-attachments/assets/b1a6372a-fa43-42b2-b413-df0438f1a720">
+
 ### Key Features
 
 - **Programmatic User Management**: Create, update, delete, and manage users programmatically using SBT API routes.
