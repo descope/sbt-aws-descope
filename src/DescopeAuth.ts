@@ -2,9 +2,16 @@ import {
   PythonFunction,
   PythonLayerVersion,
 } from "@aws-cdk/aws-lambda-python-alpha";
-import { aws_logs as AwsLogs, CustomResource, Duration } from "aws-cdk-lib";
+import {
+  aws_logs as AwsLogs,
+  CustomResource,
+  Duration,
+  RemovalPolicy,
+} from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Runtime, IFunction, LayerVersion } from "aws-cdk-lib/aws-lambda";
+import { Runtime, LayerVersion } from "aws-cdk-lib/aws-lambda";
+import { Provider } from "aws-cdk-lib/custom-resources";
+import { CreateAdminUserProps } from "@cdklabs/sbt-aws";
 import * as sbt from "@cdklabs/sbt-aws";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cdk from "aws-cdk-lib";
@@ -122,7 +129,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       this,
       "DescopeHelperLayer",
       {
-        entry: path.resolve(__dirname, "../resources/layers/helper/utils.py"),
+        entry: path.resolve(__dirname, "../resources/layers/helper"),
         compatibleRuntimes: [lambda.Runtime.PYTHON_3_12],
       }
     );
@@ -176,18 +183,17 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
      */
     this.createClientFunction = new PythonFunction(
       this,
-      "createClientFunction",
+      "CreateClientFunction",
       {
-        entry: path.join(__dirname, "../resources/functions/create-client"),
+        entry: path.resolve(__dirname, "../resources/functions/create-client"),
         runtime: Runtime.PYTHON_3_12,
         index: "index.py",
         handler: "lambda_handler",
         timeout: Duration.seconds(60),
-        layers: lambdaFunctionsLayers,
+        layers: [descopeHelperLayer],
         environment: {
           DESCOPE_PROJECT_ID: props.projectId,
           DESCOPE_MANAGEMENT_KEY: clientSecretSSMMgmtKey.parameterName,
-          DESCOPE_BASE_URI: this.defaultDomain,
         },
       }
     );
@@ -228,10 +234,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       this,
       "userManagementServices",
       {
-        entry: path.resolve(
-          __dirname,
-          "../resources/functions/user-management"
-        ),
+        entry: path.join(__dirname, "../resources/functions/user-management"),
         runtime: Runtime.PYTHON_3_12,
         index: "index.py",
         handler: "lambda_handler",
@@ -250,7 +253,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       this,
       "CreateAdminUserFunction",
       {
-        entry: path.resolve(__dirname, "../resources/functions/create-admin"),
+        entry: path.join(__dirname, "../resources/functions/create-admin"),
         runtime: Runtime.PYTHON_3_12,
         index: "index.py",
         handler: "handler",
@@ -262,7 +265,6 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     NagSuppressions.addResourceSuppressions(
       [
         this.createClientFunction.role!,
-        // TODO: Figure out which privileges in AWS make sense to use for User Management
         userManagementServices.role!,
         this.createAdminUserFunction.role!,
       ],
@@ -284,20 +286,23 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     props: CreateMachineClientProps
   ): cdk.CustomResource {
     return new cdk.CustomResource(scope, `createClientCustomResource-${id}`, {
-      serviceToken: this.createAdminUserFunction.functionArn,
+      serviceToken: this.createClientFunction.functionArn,
       properties: {
-        Name: props.name ? props.name : id,
-        ...(props.description && { Description: props.description }),
+        Name: props.name,
+        Description: props.description,
       },
     });
   }
-  createAdminUser(scope: Construct, id: string) {
+  createAdminUser(
+    scope: Construct,
+    id: string,
+    props: CreateAdminUserProps
+  ): void {
     new CustomResource(scope, `createAdminUserCustomResource-${id}`, {
       serviceToken: this.createAdminUserFunction.functionArn,
       properties: {
-        Name: "Dummy Name",
-        Email: "Dummy Email",
-        DisplayName: "Dummy Display Name",
+        Name: props.name,
+        Email: props.email,
       },
     });
   }
