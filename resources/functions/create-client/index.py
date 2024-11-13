@@ -12,7 +12,7 @@ helper = CfnResource()
 
 # Retrieve Descope project credentials from environment variables or configuration
 project_id = os.environ.get("DescopeProjectId")
-descope_mgmt_key = os.environ.get("ManagementSSMKeyName")
+descope_mgmt_key_name = os.environ.get("ManagementSSMKeyName")
 
 
 @helper.create
@@ -26,7 +26,7 @@ def create_client(event, _):
     """
 
     # Initialize the Descope client
-    descope = get_descope_handler(project_id, descope_mgmt_key)
+    descope = get_descope_handler(project_id, descope_mgmt_key_name)
     request = event.get("ResourceProperties", {})
     name = request.get("name")
     description = request.get("description")
@@ -57,8 +57,8 @@ def create_client(event, _):
         # Return data to CloudFormation
         helper.Data.update(
             {
-                "ClientId": client_id,
-                "ClientSecret": client_secret,  # Returning both client ID and secret
+                "clientId": client_id,
+                "clientSecret": client_secret,  # Returning both client ID and secret
             }
         )
     except Exception as e:
