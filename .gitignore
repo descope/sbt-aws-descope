@@ -61,3 +61,4 @@ junit.xml
 *.js
 *.d.ts
 *.env
+!/jest.config.js
