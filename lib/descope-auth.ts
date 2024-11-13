@@ -48,7 +48,7 @@ export interface DescopeAuthProps {
    * Name of SSM parameter containing Descope management key.
    * This is to make calls to Descope Management APIs.
    */
-  readonly mgmtSSMKey: string;
+  readonly clientSecretSSMMgmtKey: string;
 }
 
 export interface CreateMachineClientProps {
@@ -103,19 +103,19 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     /*
      * Sets SSM Parameter for Secret Management Key
      */
-    const managementSSMKey =
+    const clientSecretSSMMgmtKey =
       ssm.StringParameter.fromSecureStringParameterAttributes(
         this,
         "ManagementSSMKey",
         {
-          parameterName: props.mgmtSSMKey,
+          parameterName: props.clientSecretSSMMgmtKey,
         }
       );
 
     const environmentVariables = {
-      DESCOPE_PROJECT_ID: props.projectId,
-      DESCOPE_MANAGEMENT_KEY: managementSSMKey.parameterName,
-      DESCOPE_BASE_URI: this.defaultDomain,
+      DescopeProjectId: props.projectId,
+      ManagementSSMKeyName: clientSecretSSMMgmtKey.parameterName,
+      // DescopeBaseURI: this.defaultDomain,
     };
 
     // https://docs.powertools.aws.dev/lambda/python/2.31.0/#lambda-layer
@@ -199,7 +199,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         environment: environmentVariables,
       }
     );
-    managementSSMKey.grantRead(this.createMachineClientFunction);
+    clientSecretSSMMgmtKey.grantRead(this.createMachineClientFunction);
 
     // Define the custom resource provider
     const provider = new Provider(this, "Provider", {
@@ -265,7 +265,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         environment: environmentVariables,
       }
     );
-    managementSSMKey.grantRead(userManagementServices);
+    clientSecretSSMMgmtKey.grantRead(userManagementServices);
 
     // Define user operation Lambda functions
     this.createUserFunction = userManagementServices;

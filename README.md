@@ -88,9 +88,10 @@ export class ControlPlaneStack extends Stack {
     const descopeAuth = new DescopeAuth(this, "DescopeAuth", {
       idpName: "Descope",
       descopeProjectId: "<<Your Descope Project ID>>",
-      mgmtSSMKey: "<<Your Descope Management Key>>",
+      clientSecretSSMMgmtKey: "<<Your AWS Secrets Manager Secret Name>>",
       descopeDomain: "https://api.descope.com", // Optional. Replace this with your own custom domain, if configured in Descope.
-      setAPIGWScopes: false,
+      setAPIGWScopes: false, // Optional
+      controlPlaneCallbackURL: "http://localhost", // Optional
     });
 
     const controlPlane = new sbt.ControlPlane(this, "ControlPlane", {
@@ -160,14 +161,15 @@ app.post("/users", async (req, res) => {
 
 ## DescopeAuth Properties
 
-| Property Name             | Type    | Required | Description                         | Default Value             |
-| ------------------------- | ------- | -------- | ----------------------------------- | ------------------------- |
-| `descopeProjectId`        | string  | Yes      | Your Descope Project ID.            |                           |
-| `mgmtSSMKey`              | string  | Yes      | Your Descope Management Key         |                           |
-| `descopeDomain`           | string  | Optional | Base URL for Descope’s API.         | `https://api.descope.com` |
-| `idpName`                 | string  | Optional | Identity Provider name.             | `Descope`                 |
-| `setAPIGWScopes`          | boolean | Optional | Whether to set API Gateway scopes.  | `false`                   |
-| `controlPlaneCallbackURL` | string  | Optional | Callback URL for the control plane. | `false`                   |
+| Property Name             | Type    | Required | Description                                                       | Default Value             |
+| ------------------------- | ------- | -------- | ----------------------------------------------------------------- | ------------------------- |
+| `descopeProjectId`        | string  | Yes      | Your Descope Project ID.                                          |                           |
+| `clientSecretSSMMgmtKey`  | string  | Yes      | AWS Secrets Manager secret name for Descope's Management API Key. |                           |
+| `descopeDomain`           | string  | Optional | Base URL for Descope’s API.                                       | `https://api.descope.com` |
+| `idpName`                 | string  | Optional | Identity Provider name.                                           | `Descope`                 |
+| `systemAdminEmail`        | string  | Optional | Email address for the system administrator.                       |                           |
+| `setAPIGWScopes`          | boolean | Optional | Whether to set API Gateway scopes.                                | `false`                   |
+| `controlPlaneCallbackURL` | string  | Optional | Callback URL for the control plane.                               | `false`                   |
 
 ## Limitations
 

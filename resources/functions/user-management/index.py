@@ -14,8 +14,8 @@ tracer = Tracer()
 app = ApiGatewayResolver()
 
 # Retrieve Descope project credentials from environment variables or configuration
-project_id = os.environ.get("DESCOPE_PROJECT_ID")
-descope_mgmt_key = os.environ.get("DESCOPE_MANAGEMENT_KEY")
+project_id = os.environ.get("DescopeProjectId")
+descope_mgmt_key = os.environ.get("ManagementSSMKeyName")
 
 # Initialize the Descope client using the get_descope_handler function
 descope_client = get_descope_handler(project_id, descope_mgmt_key)
