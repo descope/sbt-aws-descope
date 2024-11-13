@@ -9,13 +9,16 @@ def _get_secret_ssm_parameter_from_extension(name: str):
     port = os.environ.get("PARAMETERS_SECRETS_EXTENSION_HTTP_PORT", 2773)
     aws_session_token = os.environ.get("AWS_SESSION_TOKEN")
     req = urllib.request.Request(
-        f"http://localhost:{port}/systemsmanager/parameters/get?name={quote_plus(name)}&withDecrytion=true"
+        f"http://localhost:{port}/systemsmanager/parameters/get?name={quote_plus(name)}&withDecryption=true"
     )
     req.add_header("X-Aws-Parameters-Secrets-Token", aws_session_token)
+    print(
+        f"http://localhost:{port}/systemsmanager/parameters/get?name={quote_plus(name)}&withDecryption=true"
+    )
     config = urllib.request.urlopen(req).read()
     return json.loads(config)["Parameter"]["Value"]
 
 
 def get_descope_handler(project_id, client_secret_mgmt_key):
     mgmt_key = _get_secret_ssm_parameter_from_extension(client_secret_mgmt_key)
-    return DescopeClient(project_id, mgmt_key)
+    return DescopeClient(project_id=project_id, key=mgmt_key)

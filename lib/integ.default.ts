@@ -12,7 +12,7 @@ export class IntegStack extends cdk.Stack {
 
     const descopeAuth = new DescopeAuth(this, "DescopeAuth", {
       projectId: "<<Descope Project ID>>",
-      clientSecretSSMMgmtKey: "<<Descope Management Key>>",
+      mgmtSSMKey: "<<Descope Management Key>>",
       setAPIGWScopes: true,
     });
 
