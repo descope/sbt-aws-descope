@@ -48,7 +48,7 @@ export interface DescopeAuthProps {
    * Name of SSM parameter containing Descope management key.
    * This is to make calls to Descope Management APIs.
    */
-  readonly clientSecretSSMMgmtKey: string;
+  readonly mgmtSSMKey: string;
 }
 
 export interface CreateMachineClientProps {
@@ -103,18 +103,18 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     /*
      * Sets SSM Parameter for Secret Management Key
      */
-    const clientSecretSSMMgmtKey =
+    const managementSSMKey =
       ssm.StringParameter.fromSecureStringParameterAttributes(
         this,
-        "clientSecretSSMParameterName",
+        "ManagementSSMKey",
         {
-          parameterName: props.clientSecretSSMMgmtKey,
+          parameterName: props.mgmtSSMKey,
         }
       );
 
     const environmentVariables = {
       DESCOPE_PROJECT_ID: props.projectId,
-      DESCOPE_MANAGEMENT_KEY: clientSecretSSMMgmtKey.parameterName,
+      DESCOPE_MANAGEMENT_KEY: managementSSMKey.parameterName,
       DESCOPE_BASE_URI: this.defaultDomain,
     };
 
@@ -199,7 +199,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         environment: environmentVariables,
       }
     );
-    clientSecretSSMMgmtKey.grantRead(this.createMachineClientFunction);
+    managementSSMKey.grantRead(this.createMachineClientFunction);
 
     // Define the custom resource provider
     const provider = new Provider(this, "Provider", {
@@ -265,7 +265,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         environment: environmentVariables,
       }
     );
-    clientSecretSSMMgmtKey.grantRead(userManagementServices);
+    managementSSMKey.grantRead(userManagementServices);
 
     // Define user operation Lambda functions
     this.createUserFunction = userManagementServices;
