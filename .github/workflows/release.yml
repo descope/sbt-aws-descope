@@ -1,4 +1,4 @@
-name: Release SBT AWS Descope Plugin
+name: 👊 Bump Version & Release
 
 on:
   push:
@@ -6,33 +6,39 @@ on:
       - main
 
 jobs:
-  release:
+  bump-version:
+    name: 👊 Bump Version & Release
     runs-on: ubuntu-latest
-
+    # this workflow will run only if commit message ends with "RELEASE"
+    if: contains(github.event.head_commit.message, 'RELEASE')
     steps:
-      - name: Check out the code
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Checkout source code
+        uses: actions/checkout@v4
         with:
-          node-version: "18"
-          cache: "npm"
+          persist-credentials: false
+          ref: ${{ github.ref }}
+      - name: cat package.json
+        run: cat ./package.json
 
-      - name: Install dependencies
-        run: npm install
+      - name: Get token
+        id: get_token
+        uses: tibdex/github-app-token@v1
+        with:
+          private_key: ${{ secrets.APP_PEM }}
+          app_id: ${{ secrets.APP_ID }}
 
-      - name: Run tests
-        run: npm test
-
-      - name: Bump version and generate changelog
+      - name: Automated Version Bump
+        id: version-bump
+        uses: phips28/gh-action-bump-version@master
+        with:
+          tag-prefix: release/v
+          major-wording: "MAJOR"
+          minor-wording: "MINOR"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npx standard-version --release-as minor # or major/patch as needed
-          git push --follow-tags
-
-      - name: Publish to npm
+          GITHUB_TOKEN: ${{ steps.get_token.outputs.token }}
+      - name: cat package.json
+        run: cat ./package.json
+      - name: Output Step
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
+          NEW_TAG: ${{ steps.version-bump.outputs.newTag }}
+        run: echo "new tag $NEW_TAG"
