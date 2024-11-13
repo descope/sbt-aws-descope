@@ -234,10 +234,10 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     this.defaultDomain = validateDomain(props.domain);
 
     this.managementBaseUrl = this.defaultDomain;
-    this.jwtIssuer = `https://${this.defaultDomain}/${props.projectId}`;
+    this.jwtIssuer = `${this.defaultDomain}/${props.projectId}`;
     this.jwtAudience = [props.projectId];
-    this.tokenEndpoint = `https://${this.defaultDomain}/oauth2/v1/token`;
-    this.wellKnownEndpointUrl = `https://${this.defaultDomain}/.well-known/openid-configuration`;
+    this.tokenEndpoint = `${this.defaultDomain}/oauth2/v1/token`;
+    this.wellKnownEndpointUrl = `${this.defaultDomain}/.well-known/openid-configuration`;
 
     // Default SSO application is the only user client that's currently supported.
     this.userClientId = props.projectId;
