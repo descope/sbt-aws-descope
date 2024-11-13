@@ -9,6 +9,7 @@ test("Descope Auth Lambdas Created", () => {
   new DescopeAuth(stack, "DescopeAuth", {
     projectId: "<<Your Descope Project ID>>",
     clientSecretSSMMgmtKey: "<<Your SSM Parameter for Descope Management Key>>",
+    domain: "test",
   });
 
   const template = Template.fromStack(stack);
