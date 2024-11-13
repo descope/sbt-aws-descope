@@ -195,35 +195,44 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         index: "index.py",
         handler: "handler",
         timeout: Duration.seconds(60),
-        layers: [descopeHelperLayer],
+        layers: lambdaFunctionsLayers,
         environment: environmentVariables,
       }
     );
     clientSecretSSMMgmtKey.grantRead(this.createMachineClientFunction);
 
-    // Define the custom resource provider
-    const provider = new Provider(this, "Provider", {
-      onEventHandler: this.createMachineClientFunction,
-    });
+    // // Define the custom resource provider
+    // const provider = new Provider(this, "Provider", {
+    //   onEventHandler: this.createMachineClientFunction,
+    // });
 
-    // Create the custom resource
-    const customResource = new CustomResource(
+    // // Create the custom resource
+    // const customResource = new CustomResource(
+    //   this,
+    //   "machineClientCustomResource",
+    //   {
+    //     serviceToken: provider.serviceToken,
+    //     properties: {
+    //       name: "SBT Access Key",
+    //       description: "Auto-generated Access Key for SBT",
+    //     },
+    //   }
+    // );
+
+    const machineClientResource = this.createMachineClient(
       this,
-      "machineClientCustomResource",
+      "MachineClient",
       {
-        serviceToken: provider.serviceToken,
-        properties: {
-          name: "SBT Access Key",
-          description: "Auto-generated Access Key for SBT",
-        },
+        name: "SBT Access Key",
+        description: "Auto-generated Access Key for SBT",
       }
     );
 
-    this.machineClientId = customResource.getAttString("ClientId");
+    this.machineClientId = machineClientResource.getAttString("clientId");
     new cdk.CfnOutput(this, "machineClientId", { value: this.machineClientId });
 
     this.machineClientSecret = cdk.SecretValue.resourceAttribute(
-      customResource.getAttString("ClientSecret")
+      machineClientResource.getAttString("clientSecret")
     );
 
     // Ensure the domain is valid or fallback to a generated default domain
@@ -301,6 +310,19 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
         layers: lambdaFunctionsLayers,
       }
     );
+  }
+  createMachineClient(
+    scope: Construct,
+    id: string,
+    props: CreateMachineClientProps
+  ): cdk.CustomResource {
+    return new CustomResource(scope, `createClientCustomResource-${id}*`, {
+      serviceToken: this.createMachineClientFunction.functionArn,
+      properties: {
+        Name: props.name ? props.name : id,
+        ...(props.description && { Description: props.description }),
+      },
+    });
   }
   createAdminUser(scope: Construct, id: string, props: CreateAdminUserProps) {
     new CustomResource(scope, `createAdminUserCustomResource-v2-${id}`, {
