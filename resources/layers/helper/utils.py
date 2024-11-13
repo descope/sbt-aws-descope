@@ -4,11 +4,12 @@ import urllib.request
 from urllib.parse import quote_plus
 from descope import DescopeClient
 
+aws_session_token = os.environ.get("AWS_SESSION_TOKEN")
+port = os.environ.get("PARAMETERS_SECRETS_EXTENSION_HTTP_PORT", 2773)
+
 
 def _get_secret_ssm_parameter_from_extension(name: str):
     try:
-        port = os.environ.get("PARAMETERS_SECRETS_EXTENSION_HTTP_PORT", 2773)
-        aws_session_token = os.environ.get("AWS_SESSION_TOKEN")
         req = urllib.request.Request(
             f"http://localhost:{port}/systemsmanager/parameters/get?name={quote_plus(name)}&withDecryption=true"
         )
