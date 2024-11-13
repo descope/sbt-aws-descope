@@ -2,7 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { DescopeAuth } from "../src/DescopeAuth";
 
-test("DescopeAuth Lambdas Created", () => {
+test("Descope Auth Lambdas Created", () => {
   const app = new cdk.App();
   const stack = new cdk.Stack(app, "descope-test-stack");
 
