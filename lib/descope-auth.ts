@@ -238,7 +238,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     this.tokenEndpoint = `${this.defaultDomain}/oauth2/v1/token`;
     this.wellKnownEndpointUrl = `${this.defaultDomain}/.well-known/openid-configuration`;
 
-    // Default SSO application is the only user client that's currently supported.
+    // Default SSO application is the only user client that's supported.
     this.userClientId = props.projectId;
     new cdk.CfnOutput(this, "userClientId", { value: this.userClientId });
 
