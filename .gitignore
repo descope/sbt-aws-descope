@@ -53,8 +53,12 @@ junit.xml
 !/test/
 !/tsconfig.dev.json
 !/src/
+<<<<<<< HEAD
 
 !/dist
+=======
+/dist/
+>>>>>>> parent of 965b8c9 (made changes to .gitignore)
 !/.eslintrc.json
 .jsii
 !/API.md

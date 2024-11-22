@@ -115,7 +115,6 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     const environmentVariables = {
       DescopeProjectId: props.projectId,
       ManagementSSMKeyName: clientSecretSSMMgmtKey.parameterName,
-      // DescopeBaseURI: this.defaultDomain,
     };
 
     // https://docs.powertools.aws.dev/lambda/python/2.31.0/#lambda-layer
