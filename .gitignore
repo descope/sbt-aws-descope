@@ -53,13 +53,11 @@ junit.xml
 !/test/
 !/tsconfig.dev.json
 !/src/
-
-!/dist
+/dist/
 !/.eslintrc.json
 .jsii
+tsconfig.json
 !/API.md
 !/.projenrc.ts
 *.js
 *.d.ts
-*.env
-!/jest.config.js

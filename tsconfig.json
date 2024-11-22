@@ -3,9 +3,7 @@
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["es2020", "dom"],
-    "outDir": "./dist",
     "declaration": true,
-    "moduleResolution": "node",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -19,7 +17,7 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-    "typeRoots": ["./node_modules/@types", "./src/@types"]
+    "typeRoots": ["./node_modules/@types"]
   },
-  "exclude": ["node_modules", "cdk.out", "dist"]
+  "exclude": ["node_modules", "cdk.out"]
 }
