@@ -1,17 +1,13 @@
 {
   "name": "sbt-aws-descope",
   "version": "1.0.3",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest"
   },
-  "files": [
-    "dist",
-    "README.md"
-  ],
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "20.11.19",
