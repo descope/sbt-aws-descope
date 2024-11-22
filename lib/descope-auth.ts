@@ -232,6 +232,7 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
     this.defaultDomain = validateDomain(props.domain);
 
     this.managementBaseUrl = this.defaultDomain;
+
     this.jwtIssuer = `${this.defaultDomain}/${props.projectId}`;
     this.jwtAudience = [props.projectId];
     this.tokenEndpoint = `${this.defaultDomain}/oauth2/v1/token`;
