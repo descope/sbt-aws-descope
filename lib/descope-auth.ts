@@ -257,7 +257,6 @@ export class DescopeAuth extends Construct implements sbt.IAuth {
       }
     );
     clientSecretSSMMgmtKey.grantRead(userManagementServices);
-
     // Define user operation Lambda functions
     this.createUserFunction = userManagementServices;
     this.fetchAllUsersFunction = userManagementServices;
