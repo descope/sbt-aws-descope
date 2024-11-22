@@ -8,6 +8,10 @@
     "watch": "tsc -w",
     "test": "jest"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "20.11.19",
