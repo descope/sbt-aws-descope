@@ -2,6 +2,8 @@
 
 # Descope for AWS SaaS Builder Toolkit (SBT)
 
+> **Note**: A sample app of this SBT plugin can be found on our GitHub page [here](https://github.com/descope-sample-apps/sbt-aws-sample-app).
+
 This module integrates [Descope](https://www.descope.com/) as the authentication provider within the AWS SaaS Builder Toolkit (SBT), enabling seamless user authentication and management in SaaS applications. Descope’s features—such as passwordless authentication, MFA, SSO, machine-to-machine (M2M) authentication, and comprehensive user management—are seamlessly available to SaaS tenants and users, enhancing security while simplifying identity management.
 
 For more information on SaaS best practices, see the [AWS SaaS Builder Toolkit (SBT)](https://github.com/awslabs/sbt-aws), which provides reusable components for tenant management, billing, and onboarding, reducing boilerplate code and promoting reusable implementations.
